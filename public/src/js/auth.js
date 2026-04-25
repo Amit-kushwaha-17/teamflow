@@ -275,14 +275,19 @@ export async function createFirstAdmin(name, email, password) {
 // ─────────────────────────────────────────────────
 function friendlyAuthError(code) {
   const map = {
-    "auth/user-not-found": "No account with that email.",
-    "auth/wrong-password": "Incorrect password.",
-    "auth/email-already-in-use": "Email already registered.",
-    "auth/weak-password": "Password must be at least 6 characters.",
-    "auth/invalid-email": "Invalid email address.",
-    "auth/too-many-requests": "Too many attempts. Try again later.",
-    "auth/popup-closed-by-user": "Sign-in cancelled.",
-    "auth/network-request-failed": "Network error. Check your connection.",
+    "auth/user-not-found":       "No account found with that email.",
+    "auth/wrong-password":       "Incorrect password. Please try again.",
+    "auth/invalid-credential":   "Incorrect email or password.",
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/weak-password":        "Password must be at least 6 characters.",
+    "auth/invalid-email":        "Please enter a valid email address.",
+    "auth/too-many-requests":    "Too many attempts. Please wait a few minutes.",
+    "auth/popup-closed-by-user": "Sign-in popup was closed. Please try again.",
+    "auth/network-request-failed": "Network error. Check your internet connection.",
+    "auth/operation-not-allowed":  "This sign-in method is not enabled in Firebase.",
+    "auth/requires-recent-login":  "Please sign out and sign in again.",
+    "auth/account-exists-with-different-credential": "An account already exists with this email using a different sign-in method.",
   };
-  return map[code] || "Authentication failed. Try again.";
+  // Return the mapped message, or the raw code so it's never a mystery
+  return map[code] || (code ? `Error: ${code}` : "Authentication failed. Try again.");
 }

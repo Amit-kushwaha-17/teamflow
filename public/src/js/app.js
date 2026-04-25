@@ -9,12 +9,34 @@ import { subscribeToActivity } from "./activity.js";
 import { subscribeToNotifications, markAllNotifsRead, markNotifRead } from "./notifications.js";
 import { loadMembers, subscribeToMembers, subscribeToPendingMembers, approveMember, rejectMember, changeMemberRole, generateJoinCode, getJoinCodes, allMembers } from "./members.js";
 import { showScreen, showToast, getAvatarStyle, initials, avatarHTML, formatTimestamp, timeAgo, statusTag, priorityDot, roleBadge, showError, clearError, setLoading } from "./ui.js";
+import { initFirebase, getSavedConfig, saveConfig, clearConfig } from "./firebase.js";
 
 // ─────────────────────────────────────────────────
-// Boot
+// Boot — show config screen or start app
 // ─────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+  const saved = getSavedConfig();
+
+  if (!saved || !saved.apiKey || saved.apiKey === "YOUR_API_KEY") {
+    showConfigScreen();
+    return;
+  }
+
+  try {
+    initFirebase(saved);
+  } catch (e) {
+    clearConfig();
+    showConfigScreen("Invalid saved config. Please re-enter.");
+    return;
+  }
+
+  bootApp();
+});
+
+function bootApp() {
   setupRecaptcha("recaptcha-container");
+  bindConfigEvents();
+  bindAuthEvents();
 
   initAuth(
     async (user, userData) => {
@@ -25,9 +47,50 @@ document.addEventListener("DOMContentLoaded", () => {
       showScreen("auth-screen");
     }
   );
+}
 
-  bindAuthEvents();
-});
+// ─────────────────────────────────────────────────
+// Config screen logic
+// ─────────────────────────────────────────────────
+function showConfigScreen(errorMsg) {
+  showScreen("config-screen");
+  if (errorMsg) {
+    const el = document.getElementById("cfg-error");
+    if (el) el.textContent = errorMsg;
+  }
+}
+
+function bindConfigEvents() {
+  document.getElementById("btn-save-config")?.addEventListener("click", () => {
+    const config = {
+      apiKey:            document.getElementById("cfg-apiKey").value.trim(),
+      authDomain:        document.getElementById("cfg-authDomain").value.trim(),
+      projectId:         document.getElementById("cfg-projectId").value.trim(),
+      storageBucket:     document.getElementById("cfg-storageBucket").value.trim(),
+      messagingSenderId: document.getElementById("cfg-messagingSenderId").value.trim(),
+      appId:             document.getElementById("cfg-appId").value.trim(),
+    };
+
+    const errEl = document.getElementById("cfg-error");
+    for (const [k, v] of Object.entries(config)) {
+      if (!v) { errEl.textContent = `Please fill in: ${k}`; return; }
+    }
+
+    try {
+      initFirebase(config);
+      saveConfig(config);
+      showScreen("auth-screen");
+      bootApp();
+    } catch (e) {
+      errEl.textContent = "Firebase error: " + e.message;
+    }
+  });
+
+  document.getElementById("btn-reset-config")?.addEventListener("click", () => {
+    clearConfig();
+    location.reload();
+  });
+}
 
 // ─────────────────────────────────────────────────
 // Auth event bindings

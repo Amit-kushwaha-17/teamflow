@@ -12,6 +12,62 @@
 <body>
 
 <!-- ════════════════════════════════════════════
+     FIREBASE CONFIG SCREEN (shown on first visit)
+════════════════════════════════════════════ -->
+<div id="config-screen" class="screen" style="align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,rgba(79,142,247,0.08) 0%,transparent 60%),var(--bg)">
+  <div class="auth-card" style="max-width:480px">
+    <div class="auth-logo">Team<span>Flow</span> <span style="font-size:14px;color:var(--muted);font-weight:400">Setup</span></div>
+    <div class="auth-sub" style="margin-bottom:1.25rem">Connect your Firebase project to get started. This is a one-time setup stored in your browser.</div>
+
+    <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.2);border-radius:10px;padding:0.875rem 1rem;font-size:12px;color:var(--accent);margin-bottom:1.25rem;line-height:1.7">
+      <strong>Quick steps:</strong><br>
+      1. <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent)">Firebase Console</a> → Create project<br>
+      2. Add Web App → copy the config values below<br>
+      3. Enable <strong>Authentication</strong> → Email/Password + Google + Phone<br>
+      4. Create <strong>Firestore Database</strong> → Production mode<br>
+      5. Paste the Firestore rules from <code style="background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px">firestore.rules</code> in the zip
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+      <div class="form-group" style="grid-column:1/-1">
+        <label>API Key</label>
+        <input id="cfg-apiKey" placeholder="AIzaSy..." autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label>Auth Domain</label>
+        <input id="cfg-authDomain" placeholder="project.firebaseapp.com" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label>Project ID</label>
+        <input id="cfg-projectId" placeholder="your-project-id" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label>Storage Bucket</label>
+        <input id="cfg-storageBucket" placeholder="project.appspot.com" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label>Messaging Sender ID</label>
+        <input id="cfg-messagingSenderId" placeholder="123456789" autocomplete="off" />
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>App ID</label>
+        <input id="cfg-appId" placeholder="1:123456789:web:abc..." autocomplete="off" />
+      </div>
+    </div>
+
+    <div id="cfg-error" class="error-msg" style="margin-bottom:0.75rem"></div>
+    <button id="btn-save-config" class="btn btn-primary btn-full">Connect & Continue →</button>
+
+    <details style="margin-top:1rem">
+      <summary style="font-size:12px;color:var(--muted);cursor:pointer">Where do I find these values?</summary>
+      <div style="font-size:12px;color:var(--muted);margin-top:0.75rem;line-height:1.7;background:var(--surface2);border-radius:8px;padding:0.75rem">
+        Firebase Console → Project Settings (⚙ gear icon) → scroll down to <strong>Your apps</strong> → click your web app → you'll see the <code>firebaseConfig</code> object with all these values.
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
      AUTH SCREEN
 ════════════════════════════════════════════ -->
 <div id="auth-screen" class="screen" style="display:flex">
