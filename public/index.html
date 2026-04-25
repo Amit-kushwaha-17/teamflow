@@ -65,8 +65,9 @@
         <input id="reg-pass" type="password" placeholder="Min 6 characters" autocomplete="new-password" />
       </div>
       <div class="form-group">
-        <label>Join Code <span style="color:var(--muted);font-weight:400">(get this from your admin)</span></label>
-        <input id="reg-join-code" placeholder="e.g. AB12CD" style="font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase" />
+        <label>Join Code <span style="color:var(--muted);font-weight:400" id="join-code-hint">(required — get from your admin)</span></label>
+        <input id="reg-join-code" placeholder="e.g. AB12CD — leave blank if you are the first user" style="font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase" />
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">First time setting up? Leave blank — you'll become admin automatically.</div>
       </div>
       <div id="reg-error" class="error-msg"></div>
       <br />

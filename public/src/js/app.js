@@ -61,15 +61,17 @@ function bindAuthEvents() {
   // Email register
   document.getElementById("btn-email-register")?.addEventListener("click", async () => {
     clearError("reg-error");
-    setLoading("btn-email-register", true, "Create Account");
+    const name = document.getElementById("reg-name").value.trim();
+    const email = document.getElementById("reg-email").value.trim();
+    const pass = document.getElementById("reg-pass").value;
+    const code = document.getElementById("reg-join-code").value.trim();
+    if (!name) { showError("reg-error", "Please enter your full name."); return; }
+    if (!email) { showError("reg-error", "Please enter your email."); return; }
+    if (!pass)  { showError("reg-error", "Please enter a password."); return; }
+    setLoading("btn-email-register", true, "Creating account…");
     try {
-      await registerWithEmail(
-        document.getElementById("reg-name").value,
-        document.getElementById("reg-email").value,
-        document.getElementById("reg-pass").value,
-        document.getElementById("reg-join-code").value
-      );
-      showScreen("pending-screen");
+      await registerWithEmail(name, email, pass, code);
+      // onAuthStateChanged fires and routes to app (if admin) or pending screen
     } catch (e) {
       showError("reg-error", e.message);
     }

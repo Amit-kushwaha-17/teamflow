@@ -83,20 +83,53 @@ export async function loginWithEmail(email, password) {
 }
 
 // ─────────────────────────────────────────────────
-// Email / Password Register (requires join code)
+// Email / Password Register
+// First-ever user → auto admin (no join code needed)
+// Subsequent users → need a valid join code
 // ─────────────────────────────────────────────────
 export async function registerWithEmail(name, email, password, joinCode) {
-  const codeValid = await validateJoinCode(joinCode);
-  if (!codeValid) throw new Error("Invalid or expired join code.");
+  // Step 1: Create the Firebase Auth account first
+  // (Firestore rules require auth to query joinCodes)
+  let cred;
+  try {
+    cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: name });
+  } catch (e) {
+    throw new Error(friendlyAuthError(e.code));
+  }
 
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name });
+    // Step 2: Check if this is the very first user
+    const usersSnap = await getDocs(collection(db, "users"));
+    const isFirstUser = usersSnap.empty;
+
+    if (isFirstUser) {
+      // Auto-promote to admin, no join code needed
+      await createUserDoc(cred.user, name, "admin", "approved");
+      await logActivity("account_created", `Admin account created: ${name}`);
+      return cred.user;
+    }
+
+    // Step 3: Not first user — validate join code
+    if (!joinCode || joinCode.trim() === "") {
+      await cred.user.delete(); // Roll back auth account
+      throw new Error("A join code is required. Ask your admin to generate one.");
+    }
+
+    const codeValid = await validateJoinCode(joinCode);
+    if (!codeValid) {
+      await cred.user.delete(); // Roll back auth account
+      throw new Error("Invalid or expired join code. Ask your admin for a new one.");
+    }
+
     await createUserDoc(cred.user, name, "member", "pending");
     await invalidateJoinCode(joinCode, cred.user.uid);
     await logActivity("join_request", `${name} requested to join the team`);
     return cred.user;
+
   } catch (e) {
+    // If it's already our error, rethrow it
+    if (e.message && !e.code) throw e;
     throw new Error(friendlyAuthError(e.code));
   }
 }
