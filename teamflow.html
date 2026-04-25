@@ -796,7 +796,7 @@ function subscribeActivityRT() {
 }
 
 function subscribeMembersRT() {
-  const q = query(collection(fb(), 'users'), where('groups', 'array-contains', CG.id));
+  const q = collection(fb(), 'users');
   unsubMembers = onSnapshot(q, snap => {
     CGM = {};
     snap.forEach(d => { CGM[d.id] = d.data(); });
@@ -1106,7 +1106,8 @@ async function addHistory(taskId, type, text) {
 function renderMembersPage() {
   const el = document.getElementById('members-list');
   if (!el) return;
-  const members = Object.values(CGM);
+ const members = Object.values(CGM)
+  .filter(m => m.groups && m.groups.includes(CG.id));
   if (members.length === 0) { el.innerHTML = '<div class="empty"><div>No members</div></div>'; return; }
   const isAdmin = CUD?.role === 'admin';
   const isManager = ['admin','manager'].includes(CUD?.role);
