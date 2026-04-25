@@ -533,15 +533,22 @@ function saveCfg(c)    { localStorage.setItem('tf_cfg', JSON.stringify(c)); }
 // BOOT
 // ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('btn-cfg-save').addEventListener('click', trySaveCfg);
 
-  const saved = getSavedCfg();
-  if (!saved || !saved.apiKey || saved.apiKey.includes('YOUR')) {
-    showScreen('setup-screen');
-    return;
+  const firebaseConfig = {
+  apiKey: "AIzaSyAESaNb_0BYrBzLtM9mGN0s7sn1JRV6zNA",
+  authDomain: "taskflow-1ded8.firebaseapp.com",
+  projectId: "taskflow-1ded8",
+  storageBucket: "taskflow-1ded8.firebasestorage.app",
+  messagingSenderId: "306003039349",
+  appId: "1:306003039349:web:37a66173e4fb2a57bf143c"
+};
+
+  try {
+    initFB(firebaseConfig);
+    bootAuth();
+  } catch (e) {
+    console.error("Firebase init error:", e);
   }
-  try { initFB(saved); } catch(e) { showScreen('setup-screen'); return; }
-  bootAuth();
 });
 
 function trySaveCfg() {
