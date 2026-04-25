@@ -19,6 +19,12 @@ const firebaseConfig = {
   storageBucket: "YOUR_PROJECT_ID.appspot.com",
   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
   appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyAESaNb_0BYrBzLtM9mGN0s7sn1JRV6zNA",
+  authDomain: "taskflow-1ded8.firebaseapp.com",
+  projectId: "taskflow-1ded8",
+  storageBucket: "taskflow-1ded8.firebasestorage.app",
+  messagingSenderId: "306003039349",
+  appId: "1:306003039349:web:37a66173e4fb2a57bf143c"
 };
 
 const app = initializeApp(firebaseConfig);
