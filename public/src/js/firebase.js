@@ -1,22 +1,24 @@
 // ═══════════════════════════════════════════════════
 // firebase.js — Firebase initialization
-// Config is loaded from localStorage (set via setup screen)
+// Uses getter functions so modules always get live instances
 // ═══════════════════════════════════════════════════
 
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
-export let auth, db, functions;
+let _app = null;
 
 export function initFirebase(config) {
-  const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
-  auth = getAuth(app);
-  db = getFirestore(app);
-  functions = getFunctions(app);
-  return app;
+  _app = getApps().length === 0 ? initializeApp(config) : getApp();
+  return _app;
 }
+
+export function getFirebaseAuth()      { return getAuth(_app); }
+export function getFirebaseDb()        { return getFirestore(_app); }
+export function getFirebaseFunctions() { return getFunctions(_app); }
+export function isFirebaseReady()      { return _app !== null; }
 
 export function getSavedConfig() {
   try {
@@ -24,11 +26,9 @@ export function getSavedConfig() {
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
-
 export function saveConfig(config) {
   localStorage.setItem("tf_firebase_config", JSON.stringify(config));
 }
-
 export function clearConfig() {
   localStorage.removeItem("tf_firebase_config");
 }

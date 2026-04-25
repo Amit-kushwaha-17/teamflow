@@ -34,7 +34,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bootApp() {
-  setupRecaptcha("recaptcha-container");
+  // setupRecaptcha must run AFTER initFirebase() so getFirebaseAuth() works
+  try { setupRecaptcha("recaptcha-container"); } catch(e) { console.warn("Recaptcha init:", e.message); }
   bindConfigEvents();
   bindAuthEvents();
 
