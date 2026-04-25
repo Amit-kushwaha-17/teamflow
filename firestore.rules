@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isApproved() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isApproved() && getRole() == 'admin';
+    }
+
+    function isManager() {
+      return isApproved() && (getRole() == 'admin' || getRole() == 'manager');
+    }
+
+    // ── Users ──
+    match /users/{userId} {
+      // Anyone authenticated can read users (to see team members)
+      allow read: if isAuth();
+
+      // Users can create their own doc (for registration)
+      allow create: if isAuth() && request.auth.uid == userId;
+
+      // Admins can update anyone; users can only update themselves (limited fields)
+      allow update: if isAdmin() ||
+        (isAuth() && request.auth.uid == userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status']));
+
+      // Only admins can delete user docs
+      allow delete: if isAdmin();
+    }
+
+    // ── Tasks ──
+    match /tasks/{taskId} {
+      // All approved members can read tasks
+      allow read: if isApproved();
+
+      // Only admin/manager can create tasks
+      allow create: if isManager();
+
+      // Approved members can update tasks (to accept/complete)
+      // But we enforce logic in app.js / Cloud Functions for stricter rules
+      allow update: if isApproved();
+
+      // Only admin/manager can delete tasks
+      allow delete: if isManager();
+
+      // ── Task Comments ──
+      match /comments/{commentId} {
+        allow read: if isApproved();
+        allow create: if isApproved();
+        allow update, delete: if isAdmin();
+      }
+
+      // ── Task History ──
+      match /history/{historyId} {
+        allow read: if isApproved();
+        allow create: if isApproved();
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ── Activity Log ──
+    match /activity/{activityId} {
+      allow read: if isApproved();
+      allow create: if isApproved();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Notifications ──
+    match /notifications/{notifId} {
+      // Users can only read their own notifications
+      allow read: if isAuth() && resource.data.recipientId == request.auth.uid;
+      allow create: if isApproved();
+      // Users can mark their own notifications as read
+      allow update: if isAuth() && resource.data.recipientId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ── Join Codes ──
+    match /joinCodes/{codeId} {
+      // Authenticated users can read codes (to validate during registration)
+      allow read: if isAuth();
+      // Only admin/manager can create codes
+      allow create: if isManager();
+      // Allow update for marking as used (during registration)
+      allow update: if isAuth();
+      allow delete: if isAdmin();
+    }
+  }
+}
