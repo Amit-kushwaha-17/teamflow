@@ -9,7 +9,13 @@
 export function showScreen(screenId) {
   document.querySelectorAll(".screen").forEach((s) => (s.style.display = "none"));
   const target = document.getElementById(screenId);
-  if (target) target.style.display = "flex";
+  if (!target) return;
+  // app-screen needs flex + column layout
+  target.style.display = "flex";
+  if (screenId === "app-screen") {
+    target.style.flexDirection = "column";
+    target.style.height = "100vh";
+  }
 }
 
 // ─────────────────────────────────────────────────

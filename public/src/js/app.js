@@ -15,10 +15,14 @@ import { initFirebase, getSavedConfig, saveConfig, clearConfig } from "./firebas
 // Boot — show config screen or start app
 // ─────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+  // Config button is ALWAYS bound — whether we show the screen or not
+  bindConfigEvents();
+
   const saved = getSavedConfig();
 
   if (!saved || !saved.apiKey || saved.apiKey === "YOUR_API_KEY") {
-    showConfigScreen();
+    // No config yet — show the setup screen
+    showScreen("config-screen");
     return;
   }
 
@@ -26,7 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
     initFirebase(saved);
   } catch (e) {
     clearConfig();
-    showConfigScreen("Invalid saved config. Please re-enter.");
+    showScreen("config-screen");
+    const el = document.getElementById("cfg-error");
+    if (el) el.textContent = "Invalid saved config — please re-enter your Firebase values.";
     return;
   }
 
@@ -34,10 +40,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bootApp() {
-  // setupRecaptcha must run AFTER initFirebase() so getFirebaseAuth() works
-  try { setupRecaptcha("recaptcha-container"); } catch(e) { console.warn("Recaptcha init:", e.message); }
-  bindConfigEvents();
   bindAuthEvents();
+
+  // setupRecaptcha needs Firebase initialized — wrap so it never blocks the app
+  try { setupRecaptcha("recaptcha-container"); } catch(e) { console.warn("Recaptcha:", e.message); }
 
   initAuth(
     async (user, userData) => {
@@ -51,18 +57,18 @@ function bootApp() {
 }
 
 // ─────────────────────────────────────────────────
-// Config screen logic
+// Config screen — ALWAYS bound at DOMContentLoaded
 // ─────────────────────────────────────────────────
-function showConfigScreen(errorMsg) {
-  showScreen("config-screen");
-  if (errorMsg) {
-    const el = document.getElementById("cfg-error");
-    if (el) el.textContent = errorMsg;
-  }
-}
-
 function bindConfigEvents() {
-  document.getElementById("btn-save-config")?.addEventListener("click", () => {
+  const btn = document.getElementById("btn-save-config");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const errEl = document.getElementById("cfg-error");
+    errEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Connecting…";
+
     const config = {
       apiKey:            document.getElementById("cfg-apiKey").value.trim(),
       authDomain:        document.getElementById("cfg-authDomain").value.trim(),
@@ -72,9 +78,14 @@ function bindConfigEvents() {
       appId:             document.getElementById("cfg-appId").value.trim(),
     };
 
-    const errEl = document.getElementById("cfg-error");
+    // Validate all fields filled
     for (const [k, v] of Object.entries(config)) {
-      if (!v) { errEl.textContent = `Please fill in: ${k}`; return; }
+      if (!v) {
+        errEl.textContent = `Please fill in: ${k}`;
+        btn.disabled = false;
+        btn.textContent = "Connect & Continue →";
+        return;
+      }
     }
 
     try {
@@ -84,6 +95,8 @@ function bindConfigEvents() {
       bootApp();
     } catch (e) {
       errEl.textContent = "Firebase error: " + e.message;
+      btn.disabled = false;
+      btn.textContent = "Connect & Continue →";
     }
   });
 
