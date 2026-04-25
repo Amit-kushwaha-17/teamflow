@@ -8,7 +8,22 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getFunctions } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
+<<<<<<< HEAD
 export let auth, db, functions;
+=======
+// ─────────────────────────────────────────────────
+// 🔥 PASTE YOUR FIREBASE CONFIG HERE
+// Get it from: Firebase Console → Project Settings → Your Apps
+// ─────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAESaNb_0BYrBzLtM9mGN0s7sn1JRV6zNA",
+  authDomain: "taskflow-1ded8.firebaseapp.com",
+  projectId: "taskflow-1ded8",
+  storageBucket: "taskflow-1ded8.firebasestorage.app",
+  messagingSenderId: "306003039349",
+  appId: "1:306003039349:web:37a66173e4fb2a57bf143c"
+};
+>>>>>>> 53909aaba8a8eb7434181acbb5bd004a2d2ba7e0
 
 export function initFirebase(config) {
   const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
