@@ -1,95 +1,64 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helper functions ──
-    function isAuth() {
-      return request.auth != null;
-    }
+    function isAuth() { return request.auth != null; }
 
-    function getUserData() {
+    function userDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isApproved() {
-      return isAuth() && getUserData().status == 'approved';
-    }
+    function userRole() { return userDoc().role; }
 
-    function getRole() {
-      return getUserData().role;
-    }
+    function isAdmin()   { return isAuth() && userRole() == 'admin'; }
+    function isManager() { return isAuth() && (userRole() == 'admin' || userRole() == 'manager'); }
 
-    function isAdmin() {
-      return isApproved() && getRole() == 'admin';
-    }
-
-    function isManager() {
-      return isApproved() && (getRole() == 'admin' || getRole() == 'manager');
+    function inGroup(gid) {
+      return isAuth() && gid in userDoc().get('groups', []);
     }
 
     // ── Users ──
-    match /users/{userId} {
-      // Any authenticated user can read users
-      // (needed to check if team is empty during first-admin registration)
+    match /users/{uid} {
       allow read: if isAuth();
-
-      // Users can create their own profile doc (during registration)
-      allow create: if isAuth() && request.auth.uid == userId;
-
-      // Admins can update anyone; users can update their own non-role fields
-      allow update: if isAdmin() ||
-        (isAuth() && request.auth.uid == userId &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status']));
-
-      allow delete: if isAdmin();
+      allow create: if isAuth() && request.auth.uid == uid;
+      allow update: if isAuth() && (
+        request.auth.uid == uid ||
+        isAdmin()
+      );
     }
 
-    // ── Tasks ──
-    match /tasks/{taskId} {
-      allow read: if isApproved();
-      allow create: if isManager();
-      allow update: if isApproved();
-      allow delete: if isManager();
-
-      match /comments/{commentId} {
-        allow read: if isApproved();
-        allow create: if isApproved();
-        allow update, delete: if isAdmin();
-      }
-
-      match /history/{historyId} {
-        allow read: if isApproved();
-        allow create: if isApproved();
-        allow update, delete: if isAdmin();
-      }
-    }
-
-    // ── Activity Log ──
-    match /activity/{activityId} {
-      allow read: if isApproved();
-      // Allow any authenticated user to write activity
-      // (needed during registration before doc is approved)
+    // ── Groups ──
+    match /groups/{gid} {
+      allow read:   if isAuth();
       allow create: if isAuth();
-      allow update, delete: if isAdmin();
-    }
-
-    // ── Notifications ──
-    match /notifications/{notifId} {
-      allow read: if isAuth() && resource.data.recipientId == request.auth.uid;
-      allow create: if isApproved();
-      allow update: if isAuth() && resource.data.recipientId == request.auth.uid;
+      allow update: if isAdmin();
       allow delete: if isAdmin();
-    }
 
-    // ── Join Codes ──
-    match /joinCodes/{codeId} {
-      // Authenticated users can read (to validate during registration)
-      allow read: if isAuth();
-      allow create: if isManager();
-      // Allow update to mark as used (happens during registration flow)
-      allow update: if isAuth();
-      allow delete: if isAdmin();
+      // Tasks
+      match /tasks/{tid} {
+        allow read:   if inGroup(gid);
+        allow create: if isManager() && inGroup(gid);
+        allow update: if inGroup(gid);
+        allow delete: if isManager() && inGroup(gid);
+
+        match /comments/{cid} {
+          allow read:   if inGroup(gid);
+          allow create: if inGroup(gid);
+          allow update, delete: if isAdmin();
+        }
+        match /history/{hid} {
+          allow read:   if inGroup(gid);
+          allow create: if inGroup(gid);
+          allow update, delete: if isAdmin();
+        }
+      }
+
+      // Activity
+      match /activity/{aid} {
+        allow read:   if inGroup(gid) || isAdmin();
+        allow create: if isAuth();
+        allow update, delete: if isAdmin();
+      }
     }
   }
 }

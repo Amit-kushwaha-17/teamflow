@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TeamFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d0f14;--surface:#13161e;--surface2:#1a1e2a;--surface3:#222736;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8eaf0;--muted:#7a8099;
+  --accent:#4f8ef7;--green:#3ecf8e;--amber:#f5a623;--red:#f25c5c;--purple:#7c5ff5;
+  --r:10px;--rl:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;}
+
+/* ── SCREENS ── */
+.screen{min-height:100vh;display:none;align-items:center;justify-content:center;}
+#app{display:none;flex-direction:column;height:100vh;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rl);padding:2rem;width:100%;max-width:420px;}
+.card-title{font-size:20px;font-weight:600;letter-spacing:-.4px;margin-bottom:.3rem;}
+.card-title span{color:var(--accent);}
+.card-sub{color:var(--muted);font-size:13px;margin-bottom:1.75rem;line-height:1.5;}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:.9rem;}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:.35rem;letter-spacing:.4px;text-transform:uppercase;}
+input,select,textarea{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);
+  padding:.6rem .9rem;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;
+  transition:border-color .2s;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;}
+.err{color:var(--red);font-size:12px;margin-top:.4rem;min-height:16px;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.6rem 1.2rem;border-radius:var(--r);border:none;font-family:'Sora',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;text-decoration:none;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-full{width:100%;}
+.btn-sm{padding:.3rem .7rem;font-size:12px;}
+.btn-xs{padding:.2rem .5rem;font-size:11px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover:not(:disabled){background:#3a7de8;}
+.btn-secondary{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}
+.btn-secondary:hover:not(:disabled){background:var(--surface2);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2);}
+.btn-danger{background:rgba(242,92,92,.12);color:var(--red);border:1px solid rgba(242,92,92,.2);}
+.btn-danger:hover{background:rgba(242,92,92,.22);}
+.btn-green{background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.2);}
+.btn-green:hover{background:rgba(62,207,142,.22);}
+
+/* ── AUTH TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.tab{padding:.5rem 1rem;font-size:13px;cursor:pointer;color:var(--muted);border:none;background:none;font-family:'Sora',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── SETUP SCREEN ── */
+#setup-screen{background:radial-gradient(ellipse at 30% 20%,rgba(79,142,247,.08) 0%,transparent 60%),var(--bg);}
+.setup-steps{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:var(--r);padding:.875rem 1rem;font-size:12px;color:var(--accent);margin-bottom:1.25rem;line-height:1.8;}
+.setup-steps a{color:var(--accent);}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.cfg-full{grid-column:1/-1;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:.7rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-shrink:0;position:relative;z-index:100;}
+.logo{font-size:16px;font-weight:600;letter-spacing:-.5px;}
+.logo span{color:var(--accent);}
+.topbar-right{display:flex;align-items:center;gap:.75rem;margin-left:auto;}
+.user-pill{display:flex;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.3rem .7rem;font-size:13px;}
+.avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;}
+.role-badge{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500;}
+.role-admin{background:rgba(242,92,92,.15);color:var(--red);}
+.role-manager{background:rgba(245,166,35,.15);color:var(--amber);}
+.role-member{background:rgba(79,142,247,.15);color:var(--accent);}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:1rem .75rem;display:flex;flex-direction:column;gap:2px;flex-shrink:0;overflow-y:auto;}
+.sidebar-label{font-size:10px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;padding:.5rem .75rem .25rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:rgba(79,142,247,.12);color:var(--accent);}
+.nav-icon{font-size:13px;width:16px;text-align:center;}
+.badge{background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:auto;}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:1.5rem;}
+.page{display:none;}
+.page.active{display:block;}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;}
+.page-title{font-size:18px;font-weight:600;letter-spacing:-.3px;}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem;margin-bottom:1.5rem;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;}
+.stat-label{font-size:11px;color:var(--muted);}
+.stat-val{font-size:26px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;}
+
+/* ── FILTER BAR ── */
+.filters{display:flex;gap:.5rem;margin-bottom:1.25rem;flex-wrap:wrap;}
+.chip{padding:.3rem .8rem;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:'Sora',sans-serif;transition:all .15s;}
+.chip:hover{color:var(--text);}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.chip[data-f="completed"].active{background:var(--green);border-color:var(--green);}
+.chip[data-f="accepted"].active{background:var(--amber);border-color:var(--amber);color:#111;}
+.chip[data-f="high"].active{background:var(--red);border-color:var(--red);}
+
+/* ── TASK CARDS ── */
+.tasks{display:flex;flex-direction:column;gap:.75rem;}
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;transition:border-color .15s;}
+.task-card:hover{border-color:var(--border2);}
+.task-top{display:flex;align-items:flex-start;gap:.75rem;}
+.pdot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+.p-low{background:var(--green);}
+.p-medium{background:var(--amber);}
+.p-high{background:var(--red);}
+.task-title-txt{font-size:14px;font-weight:500;line-height:1.4;}
+.task-desc-txt{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5;}
+.task-meta{display:flex;align-items:center;gap:.75rem;margin-top:.75rem;flex-wrap:wrap;}
+.tag{font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;}
+.tag-pending{background:rgba(79,142,247,.12);color:var(--accent);}
+.tag-accepted{background:rgba(245,166,35,.12);color:var(--amber);}
+.tag-completed{background:rgba(62,207,142,.12);color:var(--green);}
+.task-due{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+.task-due.od{color:var(--red);}
+.task-who{font-size:11px;color:var(--muted);margin-left:auto;}
+.task-actions{display:flex;align-items:center;gap:.5rem;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);flex-wrap:wrap;}
+.cmt-btn{font-size:11px;color:var(--muted);cursor:pointer;margin-left:auto;padding:.25rem .5rem;border-radius:6px;transition:color .15s;border:none;background:none;font-family:'Sora',sans-serif;}
+.cmt-btn:hover{color:var(--text);}
+
+/* ── GROUP CARDS ── */
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;}
+.group-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;cursor:pointer;transition:border-color .2s;}
+.group-card:hover{border-color:var(--accent);}
+.group-card.selected{border-color:var(--accent);background:rgba(79,142,247,.05);}
+.group-name{font-size:15px;font-weight:500;}
+.group-code{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);background:rgba(79,142,247,.1);padding:2px 8px;border-radius:4px;margin-top:4px;display:inline-block;}
+.group-meta{font-size:12px;color:var(--muted);margin-top:.5rem;}
+
+/* ── MEMBERS ── */
+.member-row{display:flex;align-items:center;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--border);}
+.member-row:last-child{border-bottom:none;}
+.member-info{flex:1;min-width:0;}
+.member-name{font-size:13px;font-weight:500;}
+.member-email{font-size:11px;color:var(--muted);margin-top:1px;}
+.member-actions{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;}
+
+/* ── ACTIVITY ── */
+.act-list{display:flex;flex-direction:column;}
+.act-item{display:flex;gap:.75rem;padding:.7rem 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+.act-item:last-child{border-bottom:none;}
+.act-icon{width:28px;height:28px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.act-text{font-size:13px;line-height:1.5;}
+.act-time{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rl);width:100%;max-width:540px;max-height:85vh;overflow-y:auto;}
+.modal-hdr{padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);}
+.modal-title{font-size:16px;font-weight:600;}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+.modal-close:hover{background:var(--surface2);color:var(--text);}
+.modal-body{padding:1.25rem 1.5rem 1.5rem;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+
+/* ── COMMENTS ── */
+.cmt-section{border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;}
+.section-title{font-size:13px;font-weight:500;margin-bottom:.75rem;}
+.cmt-item{display:flex;gap:.75rem;margin-bottom:.75rem;}
+.cmt-body{flex:1;background:var(--surface2);border-radius:var(--r);padding:.6rem .875rem;}
+.cmt-author{font-size:12px;font-weight:500;margin-bottom:2px;}
+.cmt-text{font-size:12px;color:var(--muted);line-height:1.5;}
+.cmt-time{font-size:10px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;}
+.cmt-input-row{display:flex;gap:.5rem;margin-top:.75rem;align-items:flex-end;}
+.cmt-input-row textarea{flex:1;height:56px;}
+
+/* ── HISTORY ── */
+.hist-item{display:flex;gap:1rem;padding:.6rem 0;}
+.hist-line{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.hist-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);margin-top:2px;flex-shrink:0;}
+.hist-connector{width:1px;flex:1;background:var(--border);margin:3px 0;min-height:14px;}
+.hist-action{font-size:13px;}
+.hist-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+
+/* ── DETAIL GRID ── */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem;}
+.detail-label{font-size:11px;color:var(--muted);margin-bottom:3px;}
+
+/* ── JOIN GROUP PANEL ── */
+.join-group-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:1.25rem;}
+.join-group-title{font-size:14px;font-weight:500;margin-bottom:.75rem;}
+
+/* ── CODE DISPLAY ── */
+.code-big{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;letter-spacing:4px;color:var(--accent);background:rgba(79,142,247,.1);padding:.5rem 1.25rem;border-radius:8px;display:inline-block;}
+.code-item-row{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.code-item-row:last-child{border-bottom:none;}
+.code-val{font-family:'DM Mono',monospace;font-size:14px;letter-spacing:2px;color:var(--accent);background:rgba(79,142,247,.1);padding:2px 10px;border-radius:4px;}
+.code-used{background:var(--surface3);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;}
+.code-active{background:rgba(62,207,142,.12);color:var(--green);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;}
+
+/* ── TOAST ── */
+#toasts{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
+.toast{padding:.75rem 1.25rem;border-radius:var(--r);font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:all .25s;max-width:300px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast-success{background:rgba(62,207,142,.15);border:1px solid rgba(62,207,142,.3);color:var(--green);}
+.toast-error{background:rgba(242,92,92,.15);border:1px solid rgba(242,92,92,.3);color:var(--red);}
+.toast-info{background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);color:var(--accent);}
+
+/* ── LOADING / EMPTY ── */
+.loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--muted);font-size:13px;}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:.75rem;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:3rem;color:var(--muted);}
+.empty-icon{font-size:32px;margin-bottom:.75rem;}
+
+/* ── INFO SCREENS ── */
+.info-icon{font-size:40px;text-align:center;margin-bottom:1rem;}
+.info-title{font-size:18px;font-weight:600;margin-bottom:.5rem;text-align:center;}
+.info-sub{font-size:13px;color:var(--muted);line-height:1.6;text-align:center;}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px;}
+
+@media(max-width:640px){
+  .sidebar{display:none;}
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .detail-grid{grid-template-columns:1fr;}
+  .two-col{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP SCREEN ══ -->
+<div id="setup-screen" class="screen" style="display:flex">
+  <div class="card" style="max-width:480px">
+    <div class="card-title">Team<span>Flow</span> Setup</div>
+    <div class="card-sub">Connect your Firebase project — one-time setup.</div>
+    <div class="setup-steps">
+      <strong>Quick steps:</strong><br>
+      1. <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a> → Create project<br>
+      2. Add a Web App → copy the config below<br>
+      3. Enable <strong>Authentication → Email/Password</strong><br>
+      4. Create <strong>Firestore Database</strong> → Start in <strong>test mode</strong><br>
+      5. Paste the Firestore rules from the README
+    </div>
+    <div class="cfg-grid">
+      <div class="form-group cfg-full"><label>API Key</label><input id="cfg-apiKey" placeholder="AIzaSy..." autocomplete="off"/></div>
+      <div class="form-group"><label>Auth Domain</label><input id="cfg-authDomain" placeholder="project.firebaseapp.com" autocomplete="off"/></div>
+      <div class="form-group"><label>Project ID</label><input id="cfg-projectId" placeholder="your-project-id" autocomplete="off"/></div>
+      <div class="form-group"><label>Storage Bucket</label><input id="cfg-storageBucket" placeholder="project.appspot.com" autocomplete="off"/></div>
+      <div class="form-group"><label>Messaging Sender ID</label><input id="cfg-messagingSenderId" placeholder="123456789" autocomplete="off"/></div>
+      <div class="form-group cfg-full"><label>App ID</label><input id="cfg-appId" placeholder="1:123:web:abc" autocomplete="off"/></div>
+    </div>
+    <div id="cfg-err" class="err"></div>
+    <br/>
+    <button class="btn btn-primary btn-full" id="btn-cfg-save">Connect & Continue →</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:.5rem" id="btn-cfg-reset" onclick="localStorage.removeItem('tf_cfg');location.reload()">Reset saved config</button>
+  </div>
+</div>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div id="auth-screen" class="screen" style="background:radial-gradient(ellipse at 30% 20%,rgba(79,142,247,.08) 0%,transparent 60%),var(--bg)">
+  <div class="card">
+    <div class="card-title">Team<span>Flow</span></div>
+    <div class="card-sub">Real-time task tracker for your team</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Sign In</button>
+      <button class="tab" data-tab="register">Register</button>
+    </div>
+
+    <!-- Login -->
+    <div id="tab-login">
+      <div class="form-group"><label>Email</label><input id="li-email" type="email" placeholder="you@email.com" autocomplete="email"/></div>
+      <div class="form-group"><label>Password</label><input id="li-pass" type="password" placeholder="Your password" autocomplete="current-password"/></div>
+      <div id="li-err" class="err"></div><br/>
+      <button class="btn btn-primary btn-full" id="btn-login">Sign In</button>
+    </div>
+
+    <!-- Register -->
+    <div id="tab-register" style="display:none">
+      <div class="form-group"><label>Full Name</label><input id="re-name" placeholder="Your full name" autocomplete="name"/></div>
+      <div class="form-group"><label>Email</label><input id="re-email" type="email" placeholder="you@email.com" autocomplete="email"/></div>
+      <div class="form-group"><label>Password</label><input id="re-pass" type="password" placeholder="Min 6 characters" autocomplete="new-password"/></div>
+      <div class="form-group"><label>Confirm Password</label><input id="re-pass2" type="password" placeholder="Repeat password" autocomplete="new-password"/></div>
+      <div id="re-err" class="err"></div><br/>
+      <button class="btn btn-primary btn-full" id="btn-register">Create Account</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:.75rem;text-align:center;line-height:1.5">First account becomes Admin automatically.<br>Others must join a group after registering.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NO GROUP SCREEN ══ -->
+<div id="nogroup-screen" class="screen">
+  <div class="card">
+    <div class="info-icon">🏠</div>
+    <div class="info-title">Join a Group</div>
+    <div class="info-sub" style="margin-bottom:1.5rem">You're not in any group yet. Ask your admin for a group code, or create one if you're an admin.</div>
+    <div class="form-group"><label>Group Join Code</label><input id="ng-code" placeholder="e.g. AB12CD" style="font-family:'DM Mono',monospace;letter-spacing:3px;text-transform:uppercase"/></div>
+    <div id="ng-err" class="err"></div><br/>
+    <button class="btn btn-primary btn-full" id="btn-join-group">Join Group</button>
+    <div style="text-align:center;color:var(--muted);font-size:12px;margin:1rem 0">or</div>
+    <button class="btn btn-secondary btn-full" id="btn-create-group-ng">Create New Group</button>
+    <br/><br/>
+    <button class="btn btn-ghost btn-full" onclick="doLogout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo">Team<span>Flow</span></div>
+    <div id="group-switcher" style="font-size:12px;color:var(--muted);cursor:pointer;padding:.3rem .6rem;background:var(--surface2);border:1px solid var(--border);border-radius:6px;"></div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="avatar" id="tb-avatar" style="width:24px;height:24px;font-size:10px;"></div>
+        <span id="tb-name"></span>
+        <span id="tb-role" class="role-badge"></span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-label">Menu</div>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">◈</span>Dashboard</div>
+      <div class="nav-item" data-page="tasks"><span class="nav-icon">✦</span>Tasks</div>
+      <div class="nav-item" data-page="activity"><span class="nav-icon">◎</span>Activity</div>
+      <div class="nav-item" data-page="members" id="nav-members"><span class="nav-icon">◉</span>Members</div>
+      <div class="nav-item" data-page="admin" id="nav-admin"><span class="nav-icon">⚙</span>Admin<span class="badge" id="admin-badge" style="display:none">0</span></div>
+    </div>
+
+    <!-- Pages -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-hdr">
+          <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-sub">Welcome back</div></div>
+          <button class="btn btn-primary btn-sm" id="btn-new-task" style="display:none">+ New Task</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="stat-label">Total</div><div class="stat-val" id="s-total">—</div></div>
+          <div class="stat"><div class="stat-label">Pending</div><div class="stat-val" style="color:var(--accent)" id="s-pending">—</div></div>
+          <div class="stat"><div class="stat-label">In Progress</div><div class="stat-val" style="color:var(--amber)" id="s-accepted">—</div></div>
+          <div class="stat"><div class="stat-label">Completed</div><div class="stat-val" style="color:var(--green)" id="s-completed">—</div></div>
+        </div>
+        <div style="font-size:15px;font-weight:500;margin-bottom:.75rem">My Tasks</div>
+        <div id="my-tasks" class="tasks"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="page" id="page-tasks">
+        <div class="page-hdr">
+          <div><div class="page-title">All Tasks</div><div class="page-sub">Group task board</div></div>
+        </div>
+        <div class="filters">
+          <button class="chip active" data-f="all">All</button>
+          <button class="chip" data-f="pending">Pending</button>
+          <button class="chip" data-f="accepted">Accepted</button>
+          <button class="chip" data-f="completed">Completed</button>
+          <button class="chip" data-f="high">High Priority</button>
+        </div>
+        <div id="all-tasks" class="tasks"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div class="page" id="page-activity">
+        <div class="page-hdr"><div class="page-title">Activity Log</div></div>
+        <div id="act-list" class="act-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div class="page" id="page-members">
+        <div class="page-hdr"><div class="page-title">Members</div></div>
+        <div id="members-list"></div>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="page" id="page-admin">
+        <div class="page-hdr"><div class="page-title">Admin Panel</div></div>
+
+        <!-- Groups section -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:1.25rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <div style="font-size:15px;font-weight:500">My Groups</div>
+            <button class="btn btn-primary btn-sm" id="btn-create-group">+ Create Group</button>
+          </div>
+          <div id="admin-groups-list"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+
+        <!-- Pending members -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:1.25rem;">
+          <div style="font-size:15px;font-weight:500;margin-bottom:1rem">⏳ Pending Approvals</div>
+          <div id="pending-list"><div style="color:var(--muted);font-size:12px">No pending requests</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+
+<!-- New Task -->
+<div class="overlay" id="m-new-task">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">New Task</div><button class="modal-close" data-close="m-new-task">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Title</label><input id="nt-title" placeholder="Task title"/></div>
+      <div class="form-group"><label>Description</label><textarea id="nt-desc" rows="3" placeholder="Optional description"></textarea></div>
+      <div class="two-col">
+        <div class="form-group"><label>Priority</label>
+          <select id="nt-priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select>
+        </div>
+        <div class="form-group"><label>Due Date</label><input id="nt-due" type="date"/></div>
+      </div>
+      <div class="form-group"><label>Assign To (optional)</label>
+        <select id="nt-assignee"><option value="">— Open to anyone —</option></select>
+      </div>
+      <div id="nt-err" class="err"></div><br/>
+      <button class="btn btn-primary btn-full" id="btn-create-task">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Detail -->
+<div class="overlay" id="m-task-detail">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="m-task-title">Task</div><button class="modal-close" data-close="m-task-detail">✕</button></div>
+    <div class="modal-body" id="m-task-body"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- Create Group -->
+<div class="overlay" id="m-create-group">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">Create Group</div><button class="modal-close" data-close="m-create-group">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Group Name</label><input id="cg-name" placeholder="e.g. Dev Team, Marketing..."/></div>
+      <div id="cg-err" class="err"></div><br/>
+      <button class="btn btn-primary btn-full" id="btn-do-create-group">Create Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Role Modal -->
+<div class="overlay" id="m-role">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hdr"><div class="modal-title">Assign Role</div><button class="modal-close" data-close="m-role">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Member</label><input id="role-member-name" disabled/></div>
+      <div class="form-group"><label>Role</label>
+        <select id="role-select">
+          <option value="member">Member</option>
+          <option value="manager">Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div id="role-err" class="err"></div><br/>
+      <button class="btn btn-primary btn-full" id="btn-save-role">Save Role</button>
+    </div>
+  </div>
+</div>
+
+<!-- Group Switcher Modal -->
+<div class="overlay" id="m-groups">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hdr"><div class="modal-title">Switch Group</div><button class="modal-close" data-close="m-groups">✕</button></div>
+    <div class="modal-body">
+      <div id="switch-groups-list"></div>
+      <br/>
+      <div class="join-group-panel">
+        <div class="join-group-title">Join another group</div>
+        <div class="form-group"><label>Join Code</label><input id="sw-code" placeholder="AB12CD" style="font-family:'DM Mono',monospace;letter-spacing:3px;text-transform:uppercase"/></div>
+        <div id="sw-err" class="err"></div>
+        <button class="btn btn-primary btn-full" id="btn-sw-join" style="margin-top:.5rem">Join Group</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, setDoc, onSnapshot, query, orderBy, where, limit, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let _app, _auth, _db;
+let CU = null;        // current Firebase user
+let CUD = null;       // current user Firestore data
+let CG = null;        // current group doc
+let CGM = {};         // current group members {uid: memberData}
+let allTasks = [];
+let filterVal = 'all';
+let unsubTasks = null, unsubAct = null, unsubMembers = null;
+let roleTargetUid = null;
+
+// ══════════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════════
+function fb() { return _db; }
+function fa() { return _auth; }
+
+function initFB(config) {
+  _app  = getApps().length === 0 ? initializeApp(config) : getApp();
+  _auth = getAuth(_app);
+  _db   = getFirestore(_app);
+}
+
+function getSavedCfg() { try { const r = localStorage.getItem('tf_cfg'); return r ? JSON.parse(r) : null; } catch { return null; } }
+function saveCfg(c)    { localStorage.setItem('tf_cfg', JSON.stringify(c)); }
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-cfg-save').addEventListener('click', trySaveCfg);
+
+  const saved = getSavedCfg();
+  if (!saved || !saved.apiKey || saved.apiKey.includes('YOUR')) {
+    showScreen('setup-screen');
+    return;
+  }
+  try { initFB(saved); } catch(e) { showScreen('setup-screen'); return; }
+  bootAuth();
+});
+
+function trySaveCfg() {
+  const cfg = {
+    apiKey:            v('cfg-apiKey'),
+    authDomain:        v('cfg-authDomain'),
+    projectId:         v('cfg-projectId'),
+    storageBucket:     v('cfg-storageBucket'),
+    messagingSenderId: v('cfg-messagingSenderId'),
+    appId:             v('cfg-appId'),
+  };
+  const errEl = document.getElementById('cfg-err');
+  for (const [k, val] of Object.entries(cfg)) {
+    if (!val) { errEl.textContent = `Please fill in: ${k}`; return; }
+  }
+  errEl.textContent = '';
+  try {
+    initFB(cfg);
+    saveCfg(cfg);
+    showScreen('auth-screen');
+    bootAuth();
+  } catch(e) { errEl.textContent = 'Firebase error: ' + e.message; }
+}
+
+function bootAuth() {
+  bindAuthEvents();
+  bindAppEvents();
+  onAuthStateChanged(fa(), async (user) => {
+    if (user) {
+      CU = user;
+      const ud = await getDoc(doc(fb(), 'users', user.uid));
+      if (ud.exists()) {
+        CUD = ud.data();
+        const groups = CUD.groups || [];
+        if (groups.length === 0) {
+          showScreen('nogroup-screen');
+        } else {
+          // load last active group or first
+          const lastGid = localStorage.getItem('tf_last_group_' + CU.uid);
+          const gid = (lastGid && groups.includes(lastGid)) ? lastGid : groups[0];
+          await loadGroupAndStartApp(gid);
+        }
+      } else {
+        showScreen('nogroup-screen');
+      }
+    } else {
+      CU = null; CUD = null; CG = null;
+      teardown();
+      showScreen('auth-screen');
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// AUTH EVENTS
+// ══════════════════════════════════════════════
+function bindAuthEvents() {
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-login').style.display    = tab.dataset.tab === 'login'    ? 'block' : 'none';
+      document.getElementById('tab-register').style.display = tab.dataset.tab === 'register' ? 'block' : 'none';
+    });
+  });
+
+  document.getElementById('btn-login').addEventListener('click', async () => {
+    const email = v('li-email'), pass = v('li-pass');
+    const errEl = document.getElementById('li-err');
+    errEl.textContent = '';
+    if (!email || !pass) { errEl.textContent = 'Please fill in all fields.'; return; }
+    setBtnLoading('btn-login', true, 'Sign In');
+    try { await signInWithEmailAndPassword(fa(), email, pass); }
+    catch(e) { errEl.textContent = fErr(e.code); }
+    setBtnLoading('btn-login', false, 'Sign In');
+  });
+
+  document.getElementById('btn-register').addEventListener('click', async () => {
+    const name = v('re-name'), email = v('re-email'), pass = v('re-pass'), pass2 = v('re-pass2');
+    const errEl = document.getElementById('re-err');
+    errEl.textContent = '';
+    if (!name)  { errEl.textContent = 'Name required.'; return; }
+    if (!email) { errEl.textContent = 'Email required.'; return; }
+    if (pass.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+    if (pass !== pass2)  { errEl.textContent = 'Passwords do not match.'; return; }
+    setBtnLoading('btn-register', true, 'Create Account');
+    try {
+      const cred = await createUserWithEmailAndPassword(fa(), email, pass);
+      await updateProfile(cred.user, { displayName: name });
+      // Check if first user → admin
+      const allUsers = await getDocs(collection(fb(), 'users'));
+      const isFirst  = allUsers.empty || (allUsers.size === 1 && allUsers.docs[0].id === cred.user.uid);
+      const role = isFirst ? 'admin' : 'member';
+      await setDoc(doc(fb(), 'users', cred.user.uid), {
+        uid: cred.user.uid, name, email,
+        role, groups: [], createdAt: serverTimestamp(),
+      });
+      // If admin, onAuthStateChanged will redirect to nogroup screen where they create a group
+    } catch(e) { document.getElementById('re-err').textContent = fErr(e.code); }
+    setBtnLoading('btn-register', false, 'Create Account');
+  });
+
+  // No-group screen
+  document.getElementById('btn-join-group').addEventListener('click', doJoinGroup);
+  document.getElementById('btn-create-group-ng').addEventListener('click', () => {
+    showScreen('setup-screen'); // Should show group modal but as a fallback
+    openModal('m-create-group');
+    showScreen('nogroup-screen'); // keep bg
+  });
+}
+
+// ══════════════════════════════════════════════
+// APP EVENTS (nav, modals, tasks, etc.)
+// ══════════════════════════════════════════════
+function bindAppEvents() {
+  // Nav
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.addEventListener('click', () => showPage(item.dataset.page));
+  });
+
+  // Filter chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      filterVal = chip.dataset.f;
+      renderTasks();
+    });
+  });
+
+  // Modal closes
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.dataset.close));
+  });
+  document.querySelectorAll('.overlay').forEach(ov => {
+    ov.addEventListener('click', e => { if (e.target === ov) closeModal(ov.id); });
+  });
+
+  // New task button
+  document.getElementById('btn-new-task').addEventListener('click', () => openModal('m-new-task'));
+
+  // Create task
+  document.getElementById('btn-create-task').addEventListener('click', doCreateTask);
+
+  // Create group
+  document.getElementById('btn-create-group').addEventListener('click', () => openModal('m-create-group'));
+  document.getElementById('btn-do-create-group').addEventListener('click', doCreateGroup);
+
+  // No-group screen create group (from modal inside nogroup)
+  document.getElementById('btn-create-group-ng').addEventListener('click', () => {
+    document.getElementById('nogroup-screen').style.display = 'none';
+    openModal('m-create-group');
+    // after creating group it will start the app
+  });
+
+  // Group switcher
+  document.getElementById('group-switcher').addEventListener('click', () => {
+    renderGroupSwitcher();
+    openModal('m-groups');
+  });
+  document.getElementById('btn-sw-join').addEventListener('click', doJoinGroupFromSwitcher);
+
+  // Role modal
+  document.getElementById('btn-save-role').addEventListener('click', doSaveRole);
+}
+
+// ══════════════════════════════════════════════
+// LOAD GROUP & START APP
+// ══════════════════════════════════════════════
+async function loadGroupAndStartApp(gid) {
+  try {
+    const gSnap = await getDoc(doc(fb(), 'groups', gid));
+    if (!gSnap.exists()) {
+      // Group deleted — remove from user
+      await updateDoc(doc(fb(), 'users', CU.uid), { groups: arrayRemove(gid) });
+      const ud = await getDoc(doc(fb(), 'users', CU.uid));
+      CUD = ud.data();
+      if ((CUD.groups || []).length === 0) { showScreen('nogroup-screen'); return; }
+      await loadGroupAndStartApp(CUD.groups[0]);
+      return;
+    }
+    CG = { id: gid, ...gSnap.data() };
+    localStorage.setItem('tf_last_group_' + CU.uid, gid);
+    startApp();
+  } catch(e) {
+    toast('Failed to load group: ' + e.message, 'error');
+  }
+}
+
+function startApp() {
+  showScreen(null); // hide all screens
+  document.getElementById('app').style.display = 'flex';
+
+  // Topbar
+  const [bg, fg] = avatarColor(CU.uid);
+  const av = document.getElementById('tb-avatar');
+  av.style.background = bg; av.style.color = fg;
+  av.textContent = initials(CUD.name);
+  document.getElementById('tb-name').textContent = CUD.name;
+  const rb = document.getElementById('tb-role');
+  rb.textContent = CUD.role; rb.className = 'role-badge role-' + CUD.role;
+  document.getElementById('group-switcher').textContent = '📁 ' + CG.name + ' ▾';
+  document.getElementById('dash-sub').textContent = 'Welcome, ' + CUD.name.split(' ')[0];
+
+  // Role gates
+  const canManage = ['admin','manager'].includes(CUD.role);
+  document.getElementById('btn-new-task').style.display = canManage ? 'inline-flex' : 'none';
+  document.getElementById('nav-members').style.display = canManage ? 'flex' : 'none';
+  document.getElementById('nav-admin').style.display   = CUD.role === 'admin' ? 'flex' : 'none';
+
+  // Populate assignee dropdown
+  loadMembersForDropdown();
+
+  // Subscribe real-time
+  teardown();
+  subscribeTasksRT();
+  subscribeActivityRT();
+  subscribeMembersRT();
+
+  showPage('dashboard');
+}
+
+// ══════════════════════════════════════════════
+// REAL-TIME SUBSCRIPTIONS
+// ══════════════════════════════════════════════
+function subscribeTasksRT() {
+  const q = query(collection(fb(), 'groups', CG.id, 'tasks'), orderBy('createdAt', 'desc'));
+  unsubTasks = onSnapshot(q, snap => {
+    allTasks = [];
+    snap.forEach(d => allTasks.push({ id: d.id, ...d.data() }));
+    renderStats();
+    renderMyTasks();
+    renderTasks();
+  });
+}
+
+function subscribeActivityRT() {
+  const q = query(collection(fb(), 'groups', CG.id, 'activity'), orderBy('createdAt', 'desc'), limit(80));
+  unsubAct = onSnapshot(q, snap => {
+    const items = [];
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+    renderActivity(items);
+  });
+}
+
+function subscribeMembersRT() {
+  const q = query(collection(fb(), 'users'), where('groups', 'array-contains', CG.id));
+  unsubMembers = onSnapshot(q, snap => {
+    CGM = {};
+    snap.forEach(d => { CGM[d.id] = d.data(); });
+    // Update CUD in case role changed
+    if (CGM[CU.uid]) {
+      const newRole = CGM[CU.uid].role;
+      if (CUD.role !== newRole) {
+        CUD = { ...CUD, role: newRole };
+        document.getElementById('tb-role').textContent = newRole;
+        document.getElementById('tb-role').className = 'role-badge role-' + newRole;
+        const canManage = ['admin','manager'].includes(newRole);
+        document.getElementById('btn-new-task').style.display = canManage ? 'inline-flex' : 'none';
+        document.getElementById('nav-members').style.display = canManage ? 'flex' : 'none';
+        document.getElementById('nav-admin').style.display   = newRole === 'admin' ? 'flex' : 'none';
+      }
+    }
+    loadMembersForDropdown();
+    if (document.getElementById('page-members').classList.contains('active')) renderMembersPage();
+    if (document.getElementById('page-admin').classList.contains('active')) renderAdminPage();
+    // Pending badge
+    const pending = Object.values(CGM).filter(m => m.pendingGroups && m.pendingGroups.includes(CG.id));
+    const badge = document.getElementById('admin-badge');
+    badge.style.display = pending.length > 0 ? 'inline-flex' : 'none';
+    badge.textContent = pending.length;
+  });
+}
+
+function teardown() {
+  if (unsubTasks)   { unsubTasks();   unsubTasks = null; }
+  if (unsubAct)     { unsubAct();     unsubAct = null; }
+  if (unsubMembers) { unsubMembers(); unsubMembers = null; }
+}
+
+// ══════════════════════════════════════════════
+// PAGE NAVIGATION
+// ══════════════════════════════════════════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page)?.classList.add('active');
+  document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+  if (page === 'members') renderMembersPage();
+  if (page === 'admin')   renderAdminPage();
+}
+
+// ══════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════
+function renderStats() {
+  set('s-total',     allTasks.length);
+  set('s-pending',   allTasks.filter(t => t.status === 'pending').length);
+  set('s-accepted',  allTasks.filter(t => t.status === 'accepted').length);
+  set('s-completed', allTasks.filter(t => t.status === 'completed').length);
+}
+
+// ══════════════════════════════════════════════
+// TASK RENDERING
+// ══════════════════════════════════════════════
+function renderMyTasks() {
+  const mine = allTasks.filter(t => t.assigneeId === CU.uid || t.acceptedBy === CU.uid);
+  renderTaskList('my-tasks', mine);
+}
+
+function renderTasks() {
+  let tasks = allTasks;
+  if (filterVal === 'pending')   tasks = tasks.filter(t => t.status === 'pending');
+  if (filterVal === 'accepted')  tasks = tasks.filter(t => t.status === 'accepted');
+  if (filterVal === 'completed') tasks = tasks.filter(t => t.status === 'completed');
+  if (filterVal === 'high')      tasks = tasks.filter(t => t.priority === 'high');
+  renderTaskList('all-tasks', tasks);
+}
+
+function renderTaskList(elId, tasks) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (tasks.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">◎</div><div>No tasks here</div></div>';
+    return;
+  }
+  el.innerHTML = tasks.map(taskHTML).join('');
+}
+
+function taskHTML(t) {
+  const canManage = ['admin','manager'].includes(CUD?.role);
+  const canAccept = t.status === 'pending' && (!t.assigneeId || t.assigneeId === CU?.uid) && t.acceptedBy !== CU?.uid;
+  const isAccepter = t.acceptedBy === CU?.uid || (t.assigneeId === CU?.uid && t.status === 'accepted');
+  const canComplete = isAccepter && t.status === 'accepted';
+
+  const due = t.dueDate ? new Date(t.dueDate) : null;
+  const od  = due && due < new Date() && t.status !== 'completed';
+  const dueStr = due ? `<span class="task-due ${od?'od':''}">${od?'⚠ ':''}Due ${due.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span>` : '';
+
+  const whoStr = t.acceptedBy ? `👤 ${CGM[t.acceptedBy]?.name || t.acceptedByName || '?'} (accepted)`
+    : t.assigneeId ? `👤 ${CGM[t.assigneeId]?.name || t.assigneeName || '?'} (assigned)`
+    : '👤 Open';
+
+  return `<div class="task-card">
+    <div class="task-top">
+      <div class="pdot p-${t.priority}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="task-title-txt">${esc(t.title)}</div>
+        ${t.description ? `<div class="task-desc-txt">${esc(t.description)}</div>` : ''}
+      </div>
+    </div>
+    <div class="task-meta">
+      <span class="tag tag-${t.status}">${t.status}</span>
+      ${dueStr}
+      <span class="task-who">${whoStr}</span>
+    </div>
+    <div class="task-actions">
+      ${canAccept   ? `<button class="btn btn-secondary btn-sm" onclick="_accept('${t.id}')">Accept</button>` : ''}
+      ${canComplete ? `<button class="btn btn-green btn-sm" onclick="_complete('${t.id}')">Mark Complete ✓</button>` : ''}
+      ${canManage && t.status !== 'completed' ? `<button class="btn btn-danger btn-sm" onclick="_deleteTask('${t.id}')">Delete</button>` : ''}
+      <button class="cmt-btn" onclick="_detail('${t.id}')">💬 ${t.commentCount||0} · History</button>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// TASK ACTIONS
+// ══════════════════════════════════════════════
+window._accept = async (id) => {
+  const t = allTasks.find(t => t.id === id);
+  if (!t) return;
+  if (t.assigneeId && t.assigneeId !== CU.uid) { toast('This task is assigned to someone else.','error'); return; }
+  try {
+    await updateDoc(doc(fb(),'groups',CG.id,'tasks',id), {
+      status:'accepted', acceptedBy:CU.uid, acceptedByName:CUD.name, acceptedAt:serverTimestamp()
+    });
+    await addHistory(id,'accepted',`Accepted by ${CUD.name}`);
+    await logAct('task_accepted', `${CUD.name} accepted: "${t.title}"`);
+    toast('Task accepted!','success');
+  } catch(e) { toast(e.message,'error'); }
+};
+
+window._complete = async (id) => {
+  const t = allTasks.find(t => t.id === id);
+  if (!t) return;
+  if (t.acceptedBy !== CU.uid && !(t.assigneeId === CU.uid && t.status === 'accepted')) {
+    toast('Only the person who accepted this task can complete it.','error'); return;
+  }
+  try {
+    await updateDoc(doc(fb(),'groups',CG.id,'tasks',id), {
+      status:'completed', completedAt:serverTimestamp()
+    });
+    await addHistory(id,'completed',`Completed by ${CUD.name}`);
+    await logAct('task_completed', `${CUD.name} completed: "${t.title}"`);
+    toast('Task completed! 🎉','success');
+  } catch(e) { toast(e.message,'error'); }
+};
+
+window._deleteTask = async (id) => {
+  if (!confirm('Delete this task?')) return;
+  const t = allTasks.find(t => t.id === id);
+  try {
+    await deleteDoc(doc(fb(),'groups',CG.id,'tasks',id));
+    await logAct('task_deleted', `${CUD.name} deleted: "${t?.title}"`);
+    toast('Task deleted.','info');
+  } catch(e) { toast(e.message,'error'); }
+};
+
+async function doCreateTask() {
+  const title = v('nt-title');
+  const desc  = v('nt-desc');
+  const prio  = v('nt-priority');
+  const due   = v('nt-due');
+  const aid   = v('nt-assignee');
+  const errEl = document.getElementById('nt-err');
+  errEl.textContent = '';
+  if (!title) { errEl.textContent = 'Title is required.'; return; }
+  setBtnLoading('btn-create-task', true, 'Create Task');
+  try {
+    const ref = await addDoc(collection(fb(),'groups',CG.id,'tasks'), {
+      title, description: desc, priority: prio, status:'pending',
+      dueDate: due || null,
+      assigneeId: aid || null,
+      assigneeName: aid ? CGM[aid]?.name : null,
+      acceptedBy: null, acceptedByName: null, acceptedAt: null, completedAt: null,
+      commentCount: 0,
+      createdBy: CU.uid, createdByName: CUD.name,
+      createdAt: serverTimestamp(),
+    });
+    await addHistory(ref.id,'created',`Created by ${CUD.name}`);
+    await logAct('task_created', `${CUD.name} created task: "${title}"`);
+    closeModal('m-new-task');
+    set('nt-title',''); set('nt-desc',''); set('nt-due','');
+    document.getElementById('nt-assignee').value = '';
+    toast('Task created!','success');
+  } catch(e) { errEl.textContent = e.message; }
+  setBtnLoading('btn-create-task', false, 'Create Task');
+}
+
+// ══════════════════════════════════════════════
+// TASK DETAIL (comments + history)
+// ══════════════════════════════════════════════
+window._detail = async (id) => {
+  const t = allTasks.find(t => t.id === id);
+  if (!t) return;
+  document.getElementById('m-task-title').textContent = t.title;
+  document.getElementById('m-task-body').innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  openModal('m-task-detail');
+
+  const [commSnap, histSnap] = await Promise.all([
+    getDocs(query(collection(fb(),'groups',CG.id,'tasks',id,'comments'), orderBy('createdAt','asc'))),
+    getDocs(query(collection(fb(),'groups',CG.id,'tasks',id,'history'),  orderBy('createdAt','asc'))),
+  ]);
+  const comments = []; commSnap.forEach(d => comments.push({id:d.id,...d.data()}));
+  const history  = []; histSnap.forEach(d => history.push({id:d.id,...d.data()}));
+
+  const due = t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : 'None';
+
+  const cmtHtml = comments.length === 0
+    ? '<div style="color:var(--muted);font-size:12px;padding:.5rem 0">No comments yet</div>'
+    : comments.map(c => {
+        const [bg,fg] = avatarColor(c.authorId);
+        return `<div class="cmt-item">
+          <div class="avatar" style="width:28px;height:28px;font-size:10px;background:${bg};color:${fg}">${initials(c.authorName)}</div>
+          <div class="cmt-body">
+            <div class="cmt-author">${esc(c.authorName)}</div>
+            <div class="cmt-text">${esc(c.text)}</div>
+            <div class="cmt-time">${fmtTs(c.createdAt)}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+  const histHtml = history.map((h,i) => `
+    <div class="hist-item">
+      <div class="hist-line">
+        <div class="hist-dot" style="border-color:${h.type==='completed'?'var(--green)':h.type==='accepted'?'var(--amber)':'var(--accent)'}"></div>
+        ${i < history.length-1 ? '<div class="hist-connector"></div>' : ''}
+      </div>
+      <div>
+        <div class="hist-action">${esc(h.text)}</div>
+        <div class="hist-meta">${fmtTs(h.createdAt)}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('m-task-body').innerHTML = `
+    <div class="detail-grid">
+      <div><div class="detail-label">Status</div><span class="tag tag-${t.status}">${t.status}</span></div>
+      <div><div class="detail-label">Priority</div><span style="font-weight:500;color:${t.priority==='high'?'var(--red)':t.priority==='medium'?'var(--amber)':'var(--green)'}">${t.priority}</span></div>
+      <div><div class="detail-label">Created by</div><span style="font-size:13px">${esc(CGM[t.createdBy]?.name||t.createdByName||'?')}</span></div>
+      <div><div class="detail-label">Due</div><span style="font-size:13px">${due}</span></div>
+    </div>
+    ${t.description ? `<div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:1rem">${esc(t.description)}</div>` : ''}
+    <div class="cmt-section">
+      <div class="section-title">Comments</div>
+      <div id="cmt-body">${cmtHtml}</div>
+      <div class="cmt-input-row">
+        <textarea id="cmt-input" placeholder="Write a comment…"></textarea>
+        <button class="btn btn-secondary btn-sm" id="btn-post-cmt">Post</button>
+      </div>
+    </div>
+    <div class="cmt-section">
+      <div class="section-title">History</div>
+      ${histHtml || '<div style="color:var(--muted);font-size:12px">No history yet</div>'}
+    </div>`;
+
+  document.getElementById('btn-post-cmt').onclick = async () => {
+    const txt = document.getElementById('cmt-input').value.trim();
+    if (!txt) return;
+    try {
+      await addDoc(collection(fb(),'groups',CG.id,'tasks',id,'comments'), {
+        text:txt, authorId:CU.uid, authorName:CUD.name, createdAt:serverTimestamp()
+      });
+      const ref = doc(fb(),'groups',CG.id,'tasks',id);
+      const snap = await getDoc(ref);
+      await updateDoc(ref, { commentCount:(snap.data()?.commentCount||0)+1 });
+      await logAct('comment_added',`${CUD.name} commented on "${t.title}"`);
+      document.getElementById('cmt-input').value = '';
+      window._detail(id);
+    } catch(e) { toast(e.message,'error'); }
+  };
+};
+
+// ══════════════════════════════════════════════
+// ACTIVITY
+// ══════════════════════════════════════════════
+function renderActivity(items) {
+  const el = document.getElementById('act-list');
+  if (!el) return;
+  const icons = {task_created:'✦',task_accepted:'◎',task_completed:'✓',task_deleted:'✕',comment_added:'💬',member_joined:'👋',member_kicked:'🚫',role_changed:'🔄',group_created:'🏠'};
+  el.innerHTML = items.length === 0
+    ? '<div class="empty"><div>No activity yet</div></div>'
+    : items.map(a => `<div class="act-item">
+        <div class="act-icon">${icons[a.type]||'•'}</div>
+        <div><div class="act-text">${esc(a.text)}</div><div class="act-time">${timeAgo(a.createdAt)}</div></div>
+      </div>`).join('');
+}
+
+async function logAct(type, text) {
+  if (!CG) return;
+  await addDoc(collection(fb(),'groups',CG.id,'activity'), {
+    type, text, authorId:CU.uid, createdAt:serverTimestamp()
+  });
+}
+
+async function addHistory(taskId, type, text) {
+  await addDoc(collection(fb(),'groups',CG.id,'tasks',taskId,'history'), {
+    type, text, authorId:CU.uid, createdAt:serverTimestamp()
+  });
+}
+
+// ══════════════════════════════════════════════
+// MEMBERS PAGE
+// ══════════════════════════════════════════════
+function renderMembersPage() {
+  const el = document.getElementById('members-list');
+  if (!el) return;
+  const members = Object.values(CGM);
+  if (members.length === 0) { el.innerHTML = '<div class="empty"><div>No members</div></div>'; return; }
+  const isAdmin = CUD?.role === 'admin';
+  const isManager = ['admin','manager'].includes(CUD?.role);
+  el.innerHTML = members.map(m => {
+    const [bg,fg] = avatarColor(m.uid);
+    const isSelf = m.uid === CU.uid;
+    return `<div class="member-row">
+      <div class="avatar" style="width:36px;height:36px;font-size:13px;background:${bg};color:${fg}">${initials(m.name)}</div>
+      <div class="member-info">
+        <div class="member-name">${esc(m.name)} ${isSelf?'<span style="font-size:11px;color:var(--muted)">(you)</span>':''}</div>
+        <div class="member-email">${esc(m.email||'')} · <span class="role-badge role-${m.role}">${m.role}</span></div>
+      </div>
+      <div class="member-actions">
+        ${isAdmin && !isSelf ? `<button class="btn btn-secondary btn-xs" onclick="_editRole('${m.uid}','${esc(m.name)}','${m.role}')">Edit Role</button>` : ''}
+        ${isAdmin && !isSelf ? `<button class="btn btn-danger btn-xs" onclick="_kick('${m.uid}','${esc(m.name)}')">Kick</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window._editRole = (uid, name, role) => {
+  roleTargetUid = uid;
+  document.getElementById('role-member-name').value = name;
+  document.getElementById('role-select').value = role;
+  document.getElementById('role-err').textContent = '';
+  openModal('m-role');
+};
+
+async function doSaveRole() {
+  if (!roleTargetUid) return;
+  const newRole = document.getElementById('role-select').value;
+  setBtnLoading('btn-save-role', true, 'Save Role');
+  try {
+    await updateDoc(doc(fb(),'users',roleTargetUid), { role: newRole });
+    await logAct('role_changed', `${CUD.name} changed ${CGM[roleTargetUid]?.name}'s role to ${newRole}`);
+    closeModal('m-role');
+    toast('Role updated.','success');
+  } catch(e) { document.getElementById('role-err').textContent = e.message; }
+  setBtnLoading('btn-save-role', false, 'Save Role');
+}
+
+window._kick = async (uid, name) => {
+  if (!confirm(`Kick ${name} from this group?`)) return;
+  try {
+    await updateDoc(doc(fb(),'users',uid), { groups: arrayRemove(CG.id) });
+    await logAct('member_kicked', `${CUD.name} removed ${name} from the group`);
+    toast(`${name} removed.`,'info');
+  } catch(e) { toast(e.message,'error'); }
+};
+
+// ══════════════════════════════════════════════
+// ADMIN PAGE
+// ══════════════════════════════════════════════
+async function renderAdminPage() {
+  // Admin's groups
+  const gids = CUD?.groups || [];
+  const el = document.getElementById('admin-groups-list');
+  if (gids.length === 0) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px">No groups yet. Create one!</div>';
+  } else {
+    const snaps = await Promise.all(gids.map(id => getDoc(doc(fb(),'groups',id))));
+    el.innerHTML = snaps.map(s => {
+      if (!s.exists()) return '';
+      const g = s.data();
+      const isActive = CG?.id === s.id;
+      return `<div class="code-item-row">
+        <div>
+          <div style="font-weight:500;font-size:13px">${esc(g.name)} ${isActive?'<span style="font-size:10px;color:var(--accent)">(active)</span>':''}</div>
+          <div style="margin-top:4px">Code: <span class="code-val">${g.code}</span></div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:.4rem">
+          ${!isActive ? `<button class="btn btn-secondary btn-xs" onclick="_switchGroup('${s.id}')">Switch</button>` : ''}
+          <button class="btn btn-ghost btn-xs" onclick="_copyCode('${g.code}')">Copy Code</button>
+        </div>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted);font-size:12px">No groups found</div>';
+  }
+
+  // Pending members
+  const pending = Object.values(CGM).filter(m => m.pendingGroups && m.pendingGroups.includes(CG.id));
+  const pl = document.getElementById('pending-list');
+  if (pending.length === 0) {
+    pl.innerHTML = '<div style="color:var(--muted);font-size:12px">No pending requests</div>';
+  } else {
+    pl.innerHTML = pending.map(m => {
+      const [bg,fg] = avatarColor(m.uid);
+      return `<div class="member-row">
+        <div class="avatar" style="width:32px;height:32px;font-size:12px;background:${bg};color:${fg}">${initials(m.name)}</div>
+        <div class="member-info"><div class="member-name">${esc(m.name)}</div><div class="member-email">${esc(m.email||'')}</div></div>
+        <div class="member-actions">
+          <button class="btn btn-green btn-xs" onclick="_approveMember('${m.uid}','${esc(m.name)}')">Approve</button>
+          <button class="btn btn-danger btn-xs" onclick="_rejectMember('${m.uid}','${esc(m.name)}')">Reject</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+window._approveMember = async (uid, name) => {
+  try {
+    await updateDoc(doc(fb(),'users',uid), {
+      groups: arrayUnion(CG.id),
+      pendingGroups: arrayRemove(CG.id)
+    });
+    await logAct('member_joined', `${name} was approved and joined the group`);
+    toast(`${name} approved!`,'success');
+  } catch(e) { toast(e.message,'error'); }
+};
+
+window._rejectMember = async (uid, name) => {
+  if (!confirm(`Reject ${name}'s request?`)) return;
+  try {
+    await updateDoc(doc(fb(),'users',uid), { pendingGroups: arrayRemove(CG.id) });
+    toast(`${name} rejected.`,'info');
+  } catch(e) { toast(e.message,'error'); }
+};
+
+window._switchGroup = async (gid) => {
+  closeModal('m-groups');
+  await loadGroupAndStartApp(gid);
+};
+
+window._copyCode = (code) => {
+  navigator.clipboard.writeText(code).then(() => toast('Code copied!','success')).catch(()=> toast('Code: '+code,'info'));
+};
+
+// ══════════════════════════════════════════════
+// GROUP MANAGEMENT
+// ══════════════════════════════════════════════
+async function doCreateGroup() {
+  const name = v('cg-name');
+  const errEl = document.getElementById('cg-err');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = 'Group name required.'; return; }
+  setBtnLoading('btn-do-create-group', true, 'Creating…');
+  try {
+    const code = randCode();
+    const gRef = await addDoc(collection(fb(),'groups'), {
+      name, code, createdBy:CU.uid, createdByName:CUD.name, createdAt:serverTimestamp()
+    });
+    // Add creator to group
+    await updateDoc(doc(fb(),'users',CU.uid), { groups: arrayUnion(gRef.id) });
+    // Refresh CUD
+    const ud = await getDoc(doc(fb(),'users',CU.uid));
+    CUD = ud.data();
+    // Log
+    await addDoc(collection(fb(),'groups',gRef.id,'activity'), {
+      type:'group_created', text:`${CUD.name} created the group "${name}"`,
+      authorId:CU.uid, createdAt:serverTimestamp()
+    });
+    closeModal('m-create-group');
+    set('cg-name','');
+    toast(`Group "${name}" created! Code: ${code}`,'success');
+    await loadGroupAndStartApp(gRef.id);
+  } catch(e) { errEl.textContent = e.message; }
+  setBtnLoading('btn-do-create-group', false, 'Create Group');
+}
+
+async function doJoinGroup() {
+  const code = v('ng-code').trim().toUpperCase();
+  const errEl = document.getElementById('ng-err');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Enter a join code.'; return; }
+  setBtnLoading('btn-join-group', true, 'Joining…');
+  try {
+    await joinGroupByCode(code);
+  } catch(e) { errEl.textContent = e.message; }
+  setBtnLoading('btn-join-group', false, 'Join Group');
+}
+
+async function doJoinGroupFromSwitcher() {
+  const code = v('sw-code').trim().toUpperCase();
+  const errEl = document.getElementById('sw-err');
+  errEl.textContent = '';
+  if (!code) { errEl.textContent = 'Enter a code.'; return; }
+  setBtnLoading('btn-sw-join', true, 'Joining…');
+  try {
+    await joinGroupByCode(code);
+    closeModal('m-groups');
+  } catch(e) { errEl.textContent = e.message; }
+  setBtnLoading('btn-sw-join', false, 'Join Group');
+}
+
+async function joinGroupByCode(code) {
+  const snap = await getDocs(query(collection(fb(),'groups'), where('code','==',code)));
+  if (snap.empty) throw new Error('Invalid code. Please check and try again.');
+  const gDoc = snap.docs[0];
+  const gid = gDoc.id;
+
+  // Check if already in group
+  if ((CUD.groups||[]).includes(gid)) throw new Error('You are already in this group!');
+  // Check if already pending
+  if ((CUD.pendingGroups||[]).includes(gid)) throw new Error('You already have a pending request for this group.');
+
+  // Admin joins directly; others go pending
+  if (CUD.role === 'admin') {
+    await updateDoc(doc(fb(),'users',CU.uid), { groups: arrayUnion(gid) });
+    const ud = await getDoc(doc(fb(),'users',CU.uid));
+    CUD = ud.data();
+    await addDoc(collection(fb(),'groups',gid,'activity'), {
+      type:'member_joined', text:`${CUD.name} joined the group`,
+      authorId:CU.uid, createdAt:serverTimestamp()
+    });
+    toast('Joined group!','success');
+    await loadGroupAndStartApp(gid);
+  } else {
+    // Non-admin: add to pendingGroups, wait for admin approval
+    await updateDoc(doc(fb(),'users',CU.uid), { pendingGroups: arrayUnion(gid) });
+    toast('Join request sent! Waiting for admin approval.','info');
+    showScreen('nogroup-screen');
+    document.getElementById('ng-err').textContent = '';
+    document.querySelector('.info-sub').textContent = 'Your join request is pending admin approval. Please wait.';
+  }
+}
+
+function renderGroupSwitcher() {
+  const el = document.getElementById('switch-groups-list');
+  const gids = CUD?.groups || [];
+  if (gids.length === 0) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;margin-bottom:1rem">No groups</div>'; return; }
+  Promise.all(gids.map(id => getDoc(doc(fb(),'groups',id)))).then(snaps => {
+    el.innerHTML = snaps.filter(s => s.exists()).map(s => {
+      const g = s.data();
+      const isActive = CG?.id === s.id;
+      return `<div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:13px">${esc(g.name)}</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px">${g.code}</div>
+        </div>
+        ${isActive
+          ? '<span style="font-size:11px;color:var(--accent)">● Active</span>'
+          : `<button class="btn btn-secondary btn-xs" onclick="_switchGroup('${s.id}')">Switch</button>`}
+      </div>`;
+    }).join('') + '<div style="height:.75rem"></div>';
+  });
+}
+
+// ══════════════════════════════════════════════
+// DROPDOWN POPULATION
+// ══════════════════════════════════════════════
+function loadMembersForDropdown() {
+  const sel = document.getElementById('nt-assignee');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Open to anyone —</option>';
+  Object.entries(CGM).forEach(([uid, m]) => {
+    if (uid === CU.uid) return;
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = `${m.name} (${m.role})`;
+    sel.appendChild(opt);
+  });
+  if (prev) sel.value = prev;
+}
+
+// ══════════════════════════════════════════════
+// LOGOUT
+// ══════════════════════════════════════════════
+async function doLogout() {
+  teardown();
+  CU = null; CUD = null; CG = null; CGM = {};
+  document.getElementById('app').style.display = 'none';
+  await signOut(fa());
+}
+window.doLogout = doLogout;
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+  document.getElementById('app').style.display = 'none';
+  if (id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'flex';
+  }
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function v(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) { if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = val; else el.textContent = val; }
+}
+
+function setBtnLoading(id, loading, orig) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Please wait…' : orig;
+}
+
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type='info') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+function fErr(code) {
+  const m = {
+    'auth/user-not-found':       'No account found with that email.',
+    'auth/wrong-password':       'Incorrect password.',
+    'auth/invalid-credential':   'Incorrect email or password.',
+    'auth/email-already-in-use': 'An account with this email already exists.',
+    'auth/weak-password':        'Password must be at least 6 characters.',
+    'auth/invalid-email':        'Invalid email address.',
+    'auth/too-many-requests':    'Too many attempts. Please wait.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+  };
+  return m[code] || (code ? `Error: ${code}` : 'Something went wrong.');
+}
+
+function randCode() {
+  return Math.random().toString(36).substring(2,8).toUpperCase();
+}
+
+const AV_COLORS = [
+  ['rgba(79,142,247,.2)','#4f8ef7'],['rgba(62,207,142,.2)','#3ecf8e'],
+  ['rgba(245,166,35,.2)','#f5a623'],['rgba(242,92,92,.2)','#f25c5c'],
+  ['rgba(124,95,245,.2)','#7c5ff5'],['rgba(236,100,168,.2)','#ec64a8'],
+];
+function avatarColor(uid='') {
+  let h=0; for(const c of uid) h=(h*31+c.charCodeAt(0))%AV_COLORS.length;
+  return AV_COLORS[Math.abs(h)%AV_COLORS.length];
+}
+function initials(name='') {
+  return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+}
+function fmtTs(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function timeAgo(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const diff = Date.now()-d.getTime();
+  if (diff<60000) return 'just now';
+  if (diff<3600000) return Math.floor(diff/60000)+'m ago';
+  if (diff<86400000) return Math.floor(diff/3600000)+'h ago';
+  return Math.floor(diff/86400000)+'d ago';
+}
+</script>
+</body>
+</html>
